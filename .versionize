@@ -1,0 +1,18 @@
+{
+  "projects": [
+    {
+      "name": "Opti.CMS",
+      "path": "Opti.CMS",
+      "versionElement": "Version"
+    }
+  ],
+  "changelog": {
+    "includeAllCommits": true
+  },
+  "commitTypes": {
+    "feat": "minor",
+    "fix": "patch",
+    "docs": "none",
+    "chore": "none"
+  }
+}

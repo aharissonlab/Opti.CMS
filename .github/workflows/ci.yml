@@ -1,0 +1,79 @@
+name: CI
+
+on:
+  pull_request:
+    branches:
+      - master
+      - main
+  push:
+    branches:
+      - master
+      - main
+  merge_group:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  DOTNET_VERSION: 8.0.x
+  PROJECT_PATH: Opti.CMS/Opti.CMS.csproj
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+
+jobs:
+  validate:
+    name: Build and validate
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+          cache: true
+          cache-dependency-path: |
+            Opti.CMS/Opti.CMS.csproj
+            Opti.CMS/Directory.Build.props
+            Opti.CMS/nuget.config
+
+      - name: Restore dependencies
+        run: dotnet restore $PROJECT_PATH --configfile Opti.CMS/nuget.config
+
+      - name: Build
+        run: dotnet build $PROJECT_PATH --configuration Release --no-restore
+
+      - name: Run tests when present
+        shell: bash
+        run: |
+          mapfile -t test_projects < <(find . \
+            -path '*/bin' -prune -o \
+            -path '*/obj' -prune -o \
+            \( -name '*Tests.csproj' -o -name '*.Tests.csproj' \) \
+            -print | sort -u)
+
+          if [ ${#test_projects[@]} -eq 0 ]; then
+            echo "No test projects found. Skipping dotnet test."
+            exit 0
+          fi
+
+          dotnet test "${test_projects[@]}" --configuration Release --no-build --verbosity normal
+
+      - name: Publish smoke package
+        run: dotnet publish $PROJECT_PATH --configuration Release --no-build --output ./artifacts/publish
+
+      - name: Upload published app
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: webapp-${{ github.sha }}
+          path: artifacts/publish
+          if-no-files-found: error
+          retention-days: 14

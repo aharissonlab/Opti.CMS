@@ -1,0 +1,137 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - master
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  DOTNET_VERSION: 8.0.x
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+jobs:
+  release:
+    name: Version and tag trunk
+    runs-on: ubuntu-latest
+    outputs:
+      release_created: ${{ steps.versionize.outputs.release_created }}
+      tag: ${{ steps.versionize.outputs.tag }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+          cache: true
+          cache-dependency-path: |
+            .config/dotnet-tools.json
+            Opti.CMS/Opti.CMS.csproj
+            Opti.CMS/Directory.Build.props
+            Opti.CMS/nuget.config
+
+      - name: Restore local tools
+        run: dotnet tool restore
+
+      - name: Configure git identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Run versionize
+        id: versionize
+        shell: bash
+        run: |
+          set -euo pipefail
+          before_sha="$(git rev-parse HEAD)"
+
+          if dotnet versionize --skip-dirty --commit-suffix " [skip ci]" --exit-insignificant-commits; then
+            tag="$(git describe --tags --abbrev=0)"
+            echo "release_created=true" >> "$GITHUB_OUTPUT"
+            echo "tag=$tag" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          after_sha="$(git rev-parse HEAD)"
+          if [ "$after_sha" = "$before_sha" ]; then
+            echo "No releasable commits found on trunk."
+            echo "release_created=false" >> "$GITHUB_OUTPUT"
+            echo "tag=" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "versionize failed after changing the repository state."
+          exit 1
+
+      - name: Push release commit and tags
+        if: steps.versionize.outputs.release_created == 'true'
+        run: git push --follow-tags origin HEAD:${GITHUB_REF_NAME}
+
+      - name: Create GitHub release
+        if: steps.versionize.outputs.release_created == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if gh release view "${{ steps.versionize.outputs.tag }}" >/dev/null 2>&1; then
+            echo "GitHub Release already exists for ${{ steps.versionize.outputs.tag }}."
+            exit 0
+          fi
+          gh release create "${{ steps.versionize.outputs.tag }}" --verify-tag --title "${{ steps.versionize.outputs.tag }}" --generate-notes
+
+  deploy_production:
+    name: Deploy release to Vercel
+    runs-on: ubuntu-latest
+    needs: release
+    if: needs.release.outputs.release_created == 'true'
+    environment:
+      name: production
+
+    steps:
+      - name: Checkout release tag
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.release.outputs.tag }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+
+      - name: Pull Vercel environment
+        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Build Vercel artifact
+        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Deploy to Vercel
+        id: vercel
+        shell: bash
+        run: |
+          set -euo pipefail
+          deployment_url="$(vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }})"
+          echo "deployment_url=$deployment_url" >> "$GITHUB_OUTPUT"
+
+      - name: Add workflow summary
+        run: |
+          echo "Production deployment: ${{ steps.vercel.outputs.deployment_url }}" >> "$GITHUB_STEP_SUMMARY"
