@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [versionize](https://github.com/versionize/versionize) for commit guidelines.
 
+<a name="1.0.1"></a>
+## [1.0.1](https://www.github.com/aharissonlab/Opti.CMS/releases/tag/v1.0.1) (2026-04-18)
+
+### Bug Fixes
+
+* Continued WIPwith refactoring as per new C# standard and bug fixes with git release flow ([7d0e22a](https://www.github.com/aharissonlab/Opti.CMS/commit/7d0e22a20c2a83d6b2ec9178fb1e3dab1b8f503d))
+* updates from main back ([8467319](https://www.github.com/aharissonlab/Opti.CMS/commit/846731969053fead2640a4c30f45aaa7d53418ca))
+
 <a name="1.0.0"></a>
 ## [1.0.0](https://www.github.com/aharissonlab/Opti.CMS/releases/tag/v1.0.0) (2026-03-26)
 
