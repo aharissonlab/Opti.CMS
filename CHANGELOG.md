@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file. See [versionize](https://github.com/versionize/versionize) for commit guidelines.
 
+<a name="1.0.2"></a>
+## [1.0.2](https://www.github.com/aharissonlab/Opti.CMS/releases/tag/v1.0.2) (2026-04-18)
+
+### Bug Fixes
+
+* To handle duplicate package conflict error NETSDK1152 ([614a6c3](https://www.github.com/aharissonlab/Opti.CMS/commit/614a6c31df001732fcb1ce0ada23bf1b302d5385))
+
+### Other
+
+* Merge branch 'main' of https://github.com/aharissonlab/Opti.CMS ([b0f3cf5](https://www.github.com/aharissonlab/Opti.CMS/commit/b0f3cf57112fc0398ea88d9a0ee9b6aa628887b2))
+
 <a name="1.0.1"></a>
 ## [1.0.1](https://www.github.com/aharissonlab/Opti.CMS/releases/tag/v1.0.1) (2026-04-18)
 
