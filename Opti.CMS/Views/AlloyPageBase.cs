@@ -1,28 +1,19 @@
-using EPiServer.ServiceLocation;
+﻿using EPiServer.ServiceLocation;
 using Microsoft.AspNetCore.Mvc.Razor;
 using Microsoft.AspNetCore.Razor.TagHelpers;
 using Opti.CMS.Business.Rendering;
 
-namespace Opti.CMS.Views
+namespace Opti.CMS.Views;
+
+public abstract class AlloyPageBase<TModel>(AlloyContentAreaItemRenderer alloyContentAreaItemRenderer) : RazorPage<TModel> where TModel : class
 {
-    public abstract class AlloyPageBase<TModel> : RazorPage<TModel> where TModel : class
+    readonly AlloyContentAreaItemRenderer _alloyContentAreaItemRenderer = alloyContentAreaItemRenderer;
+
+    public abstract override Task ExecuteAsync();
+
+    public AlloyPageBase() : this(ServiceLocator.Current.GetInstance<AlloyContentAreaItemRenderer>())
     {
-        private readonly AlloyContentAreaItemRenderer _alloyContentAreaItemRenderer;
-
-        public abstract override Task ExecuteAsync();
-
-        public AlloyPageBase() : this(ServiceLocator.Current.GetInstance<AlloyContentAreaItemRenderer>())
-        {
-        }
-
-        public AlloyPageBase(AlloyContentAreaItemRenderer alloyContentAreaItemRenderer)
-        {
-            _alloyContentAreaItemRenderer = alloyContentAreaItemRenderer;
-        }
-
-        protected void OnItemRendered(ContentAreaItem contentAreaItem, TagHelperContext context, TagHelperOutput output)
-        {
-            _alloyContentAreaItemRenderer.RenderContentAreaItemCss(contentAreaItem, context, output);
-        }
     }
+
+    protected void OnItemRendered(ContentAreaItem contentAreaItem, TagHelperContext context, TagHelperOutput output) => _alloyContentAreaItemRenderer.RenderContentAreaItemCss(contentAreaItem, context, output);
 }

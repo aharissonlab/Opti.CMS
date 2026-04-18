@@ -1,17 +1,16 @@
-using EPiServer.Framework.DataAnnotations;
+﻿using EPiServer.Framework.DataAnnotations;
 
-namespace Opti.CMS.Models.Media
+namespace Opti.CMS.Models.Media;
+
+[ContentType(GUID = "0A89E464-56D4-449F-AEA8-2BF774AB8730")]
+[MediaDescriptor(ExtensionString = "jpg,jpeg,jpe,ico,gif,bmp,png")]
+public class ImageFile : ImageData
 {
-    [ContentType(GUID = "0A89E464-56D4-449F-AEA8-2BF774AB8730")]
-    [MediaDescriptor(ExtensionString = "jpg,jpeg,jpe,ico,gif,bmp,png")]
-    public class ImageFile : ImageData
-    {
-        /// <summary>
-        /// Gets or sets the copyright.
-        /// </summary>
-        /// <value>
-        /// The copyright.
-        /// </value>
-        public virtual string Copyright { get; set; }
-    }
+    /// <summary>
+    /// Gets or sets the copyright.
+    /// </summary>
+    /// <value>
+    /// The copyright.
+    /// </value>
+    public virtual string Copyright { get; set; }
 }

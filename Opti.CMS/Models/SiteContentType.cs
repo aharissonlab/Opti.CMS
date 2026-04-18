@@ -1,13 +1,9 @@
-namespace Opti.CMS.Models
+﻿namespace Opti.CMS.Models;
+
+/// <summary>
+/// Attribute used for site content types to set default attribute values
+/// </summary>
+public class SiteContentType : ContentTypeAttribute
 {
-    /// <summary>
-    /// Attribute used for site content types to set default attribute values
-    /// </summary>
-    public class SiteContentType : ContentTypeAttribute
-    {
-        public SiteContentType()
-        {
-            GroupName = Globals.GroupNames.Default;
-        }
-    }
+    public SiteContentType() => GroupName = Globals.GroupNames.Default;
 }

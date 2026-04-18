@@ -4,35 +4,29 @@ using Microsoft.AspNetCore.Mvc;
 using Opti.CMS.Models.Media;
 using Opti.CMS.Models.ViewModels;
 
-namespace Opti.CMS.Components
+namespace Opti.CMS.Components;
+
+/// <summary>
+/// Controller for the video file.
+/// </summary>
+public class VideoFileViewComponent(UrlResolver urlResolver) : PartialContentComponent<VideoFile>
 {
+    readonly UrlResolver _urlResolver = urlResolver;
+
     /// <summary>
-    /// Controller for the video file.
+    /// The index action for the video file. Creates the view model and renders the view.
     /// </summary>
-    public class VideoFileViewComponent : PartialContentComponent<VideoFile>
+    /// <param name="currentContent">The current video file.</param>
+    protected override IViewComponentResult InvokeComponent(VideoFile currentContent)
     {
-        private readonly UrlResolver _urlResolver;
-
-        public VideoFileViewComponent(UrlResolver urlResolver)
+        var model = new VideoViewModel
         {
-            _urlResolver = urlResolver;
-        }
+            Url = _urlResolver.GetUrl(currentContent.ContentLink),
+            PreviewImageUrl = ContentReference.IsNullOrEmpty(currentContent.PreviewImage)
+                ? null
+                : _urlResolver.GetUrl(currentContent.PreviewImage),
+        };
 
-        /// <summary>
-        /// The index action for the video file. Creates the view model and renders the view.
-        /// </summary>
-        /// <param name="currentContent">The current video file.</param>
-        protected override IViewComponentResult InvokeComponent(VideoFile currentContent)
-        {
-            var model = new VideoViewModel
-            {
-                Url = _urlResolver.GetUrl(currentContent.ContentLink),
-                PreviewImageUrl = ContentReference.IsNullOrEmpty(currentContent.PreviewImage)
-                    ? null
-                    : _urlResolver.GetUrl(currentContent.PreviewImage),
-            };
-
-            return View(model);
-        }
+        return View(model);
     }
 }

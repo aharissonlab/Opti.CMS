@@ -1,88 +1,71 @@
-using EPiServer.Filters;
+﻿using EPiServer.Filters;
 using EPiServer.Web.Mvc;
 using Microsoft.AspNetCore.Mvc;
 using Opti.CMS.Business;
 using Opti.CMS.Models.Blocks;
 using Opti.CMS.Models.ViewModels;
 
-namespace Opti.CMS.Components
+namespace Opti.CMS.Components;
+
+public class PageListBlockViewComponent(ContentLocator contentLocator, IContentLoader contentLoader) : BlockComponent<PageListBlock>
 {
-    public class PageListBlockViewComponent : BlockComponent<PageListBlock>
+    readonly ContentLocator _contentLocator = contentLocator;
+    readonly IContentLoader _contentLoader = contentLoader;
+
+    protected override IViewComponentResult InvokeComponent(PageListBlock currentContent)
     {
-        private readonly ContentLocator _contentLocator;
-        private readonly IContentLoader _contentLoader;
+        var pages = FindPages(currentContent);
 
-        public PageListBlockViewComponent(ContentLocator contentLocator, IContentLoader contentLoader)
+        pages = Sort(pages, currentContent.SortOrder);
+
+        if (currentContent.Count > 0)
         {
-            _contentLocator = contentLocator;
-            _contentLoader = contentLoader;
+            pages = pages.Take(currentContent.Count);
         }
 
-        protected override IViewComponentResult InvokeComponent(PageListBlock currentContent)
+        var model = new PageListModel(currentContent)
         {
-            var pages = FindPages(currentContent);
+            Pages = pages.Cast<PageData>()
+        };
 
-            pages = Sort(pages, currentContent.SortOrder);
+        ViewData.GetEditHints<PageListModel, PageListBlock>()
+            .AddConnection(x => x.Heading, x => x.Heading);
 
-            if (currentContent.Count > 0)
-            {
-                pages = pages.Take(currentContent.Count);
-            }
+        return View(model);
+    }
 
-            var model = new PageListModel(currentContent)
-            {
-                Pages = pages.Cast<PageData>()
-            };
+    IEnumerable<PageData> FindPages(PageListBlock currentBlock)
+    {
+        IEnumerable<PageData> pages;
+        var listRoot = currentBlock.Root;
 
-            ViewData.GetEditHints<PageListModel, PageListBlock>()
-                .AddConnection(x => x.Heading, x => x.Heading);
-
-            return View(model);
+        if (currentBlock.Recursive)
+        {
+            pages = currentBlock.PageTypeFilter is not null
+                ? _contentLocator.FindPagesByPageType(listRoot, true, currentBlock.PageTypeFilter.ID)
+                : _contentLocator.GetAll<PageData>(listRoot);
+        }
+        else
+        {
+            pages = currentBlock.PageTypeFilter is not null
+                ? _contentLoader
+                    .GetChildren<PageData>(listRoot)
+                    .Where(p => p.ContentTypeID == currentBlock.PageTypeFilter.ID)
+                : _contentLoader.GetChildren<PageData>(listRoot);
         }
 
-        private IEnumerable<PageData> FindPages(PageListBlock currentBlock)
+        if (currentBlock.CategoryFilter is not null && !currentBlock.CategoryFilter.IsEmpty)
         {
-            IEnumerable<PageData> pages;
-            var listRoot = currentBlock.Root;
-
-            if (currentBlock.Recursive)
-            {
-                if (currentBlock.PageTypeFilter is not null)
-                {
-                    pages = _contentLocator.FindPagesByPageType(listRoot, true, currentBlock.PageTypeFilter.ID);
-                }
-                else
-                {
-                    pages = _contentLocator.GetAll<PageData>(listRoot);
-                }
-            }
-            else
-            {
-                if (currentBlock.PageTypeFilter is not null)
-                {
-                    pages = _contentLoader
-                        .GetChildren<PageData>(listRoot)
-                        .Where(p => p.ContentTypeID == currentBlock.PageTypeFilter.ID);
-                }
-                else
-                {
-                    pages = _contentLoader.GetChildren<PageData>(listRoot);
-                }
-            }
-
-            if (currentBlock.CategoryFilter is not null && !currentBlock.CategoryFilter.IsEmpty)
-            {
-                pages = pages.Where(x => x.Category.Intersect(currentBlock.CategoryFilter).Any());
-            }
-
-            return pages;
+            pages = pages.Where(x => x.Category.Intersect(currentBlock.CategoryFilter).Any());
         }
 
-        private static IEnumerable<PageData> Sort(IEnumerable<PageData> pages, FilterSortOrder sortOrder)
-        {
-            var sortFilter = new FilterSort(sortOrder);
-            sortFilter.Sort(new PageDataCollection(pages.ToList()));
-            return pages;
-        }
+        return pages;
+    }
+
+    static IEnumerable<PageData> Sort(IEnumerable<PageData> pages, FilterSortOrder sortOrder)
+    {
+        var sortFilter = new FilterSort(sortOrder);
+        sortFilter.Sort([.. pages.ToList()]);
+        return pages;
     }
 }

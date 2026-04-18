@@ -1,9 +1,8 @@
-namespace Opti.CMS.Models.Pages
+﻿namespace Opti.CMS.Models.Pages;
+
+/// <summary>
+/// Marker interface for search implementation
+/// </summary>
+public interface ISearchPage
 {
-    /// <summary>
-    /// Marker interface for search implementation
-    /// </summary>
-    public interface ISearchPage
-    {
-    }
 }

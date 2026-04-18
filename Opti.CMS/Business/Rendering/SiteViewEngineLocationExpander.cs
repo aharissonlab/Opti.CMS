@@ -1,28 +1,27 @@
-using Microsoft.AspNetCore.Mvc.Razor;
+﻿using Microsoft.AspNetCore.Mvc.Razor;
 
-namespace Opti.CMS.Business.Rendering
+namespace Opti.CMS.Business.Rendering;
+
+public class SiteViewEngineLocationExpander : IViewLocationExpander
 {
-    public class SiteViewEngineLocationExpander : IViewLocationExpander
+    static readonly string[] AdditionalPartialViewFormats =
+    [
+        TemplateCoordinator.BlockFolder + "{0}.cshtml",
+        TemplateCoordinator.PagePartialsFolder + "{0}.cshtml"
+    ];
+
+    public IEnumerable<string> ExpandViewLocations(ViewLocationExpanderContext context, IEnumerable<string> viewLocations)
     {
-        private static readonly string[] AdditionalPartialViewFormats =
-        [
-            TemplateCoordinator.BlockFolder + "{0}.cshtml",
-            TemplateCoordinator.PagePartialsFolder + "{0}.cshtml"
-        ];
-
-        public IEnumerable<string> ExpandViewLocations(ViewLocationExpanderContext context, IEnumerable<string> viewLocations)
+        foreach (string location in viewLocations)
         {
-            foreach (var location in viewLocations)
-            {
-                yield return location;
-            }
-
-            for (var i = 0; i < AdditionalPartialViewFormats.Length; i++)
-            {
-                yield return AdditionalPartialViewFormats[i];
-            }
+            yield return location;
         }
 
-        public void PopulateValues(ViewLocationExpanderContext context) { }
+        for (int i = 0; i < AdditionalPartialViewFormats.Length; i++)
+        {
+            yield return AdditionalPartialViewFormats[i];
+        }
     }
+
+    public void PopulateValues(ViewLocationExpanderContext context) { }
 }

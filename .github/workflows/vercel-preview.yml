@@ -3,7 +3,6 @@ name: Vercel Preview
 on:
   pull_request:
     branches:
-      - master
       - main
     types:
       - opened

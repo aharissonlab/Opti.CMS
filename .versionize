@@ -2,8 +2,7 @@
   "projects": [
     {
       "name": "Opti.CMS",
-      "path": "Opti.CMS",
-      "versionElement": "Version"
+      "path": "Opti.CMS"
     }
   ],
   "changelog": {

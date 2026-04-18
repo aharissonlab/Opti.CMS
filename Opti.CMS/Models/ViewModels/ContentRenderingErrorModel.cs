@@ -1,27 +1,19 @@
-namespace Opti.CMS.Models.ViewModels
+﻿namespace Opti.CMS.Models.ViewModels;
+
+public class ContentRenderingErrorModel
 {
-    public class ContentRenderingErrorModel
+    public ContentRenderingErrorModel(IContentData contentData, Exception exception)
     {
-        public ContentRenderingErrorModel(IContentData contentData, Exception exception)
-        {
-            if (contentData is IContent content)
-            {
-                ContentName = content.Name;
-            }
-            else
-            {
-                ContentName = string.Empty;
-            }
+        ContentName = contentData is IContent content ? content.Name : string.Empty;
 
-            ContentTypeName = contentData.GetOriginalType().Name;
+        ContentTypeName = contentData.GetOriginalType().Name;
 
-            Exception = exception;
-        }
-
-        public string ContentName { get; set; }
-
-        public string ContentTypeName { get; set; }
-
-        public Exception Exception { get; set; }
+        Exception = exception;
     }
+
+    public string ContentName { get; set; }
+
+    public string ContentTypeName { get; set; }
+
+    public Exception Exception { get; set; }
 }

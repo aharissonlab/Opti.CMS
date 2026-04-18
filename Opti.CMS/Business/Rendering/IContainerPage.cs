@@ -1,9 +1,8 @@
-namespace Opti.CMS.Business.Rendering
+﻿namespace Opti.CMS.Business.Rendering;
+
+/// <summary>
+/// Marker interface for content types which should not be handled by DefaultPageController.
+/// </summary>
+interface IContainerPage
 {
-    /// <summary>
-    /// Marker interface for content types which should not be handled by DefaultPageController.
-    /// </summary>
-    internal interface IContainerPage
-    {
-    }
 }

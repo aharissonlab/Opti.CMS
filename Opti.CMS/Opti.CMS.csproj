@@ -14,7 +14,13 @@
   </ItemGroup>
   
   <ItemGroup>
-    <PackageReference Include="EPiServer.CMS" Version="12.29.0" />
+    <PackageReference Include="EPiServer.CMS" Version="12.34.2" />
+	  <PackageReference Include="EPiServer.Find.Cms" Version="16.7.1" />
+	  <PackageReference Include="EPiServer.Forms" Version="5.10.7" /> 
+	  <PackageReference Include="Geta.NotFoundHandler" Version="6.0.0" />
+	  <PackageReference Include="Geta.NotFoundHandler.Admin" Version="6.0.0" />
+	  <PackageReference Include="Geta.NotFoundHandler.Optimizely" Version="6.0.0" />
+	  <PackageReference Include="Geta.Optimizely.Sitemaps" Version="3.2.1" />
     <PackageReference Include="Wangkanai.Detection" Version="8.7.0" />
   </ItemGroup>
   

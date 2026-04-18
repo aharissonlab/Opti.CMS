@@ -7,68 +7,58 @@ using Opti.CMS.Models.Blocks;
 using Opti.CMS.Models.Pages;
 using Opti.CMS.Models.ViewModels;
 
-namespace Opti.CMS.Components
+namespace Opti.CMS.Components;
+
+public class ContactBlockViewComponent(IContentLoader contentLoader, IPermanentLinkMapper permanentLinkMapper) : BlockComponent<ContactBlock>
 {
-    public class ContactBlockViewComponent : BlockComponent<ContactBlock>
+    readonly IContentLoader _contentLoader = contentLoader;
+    readonly IPermanentLinkMapper _permanentLinkMapper = permanentLinkMapper;
+
+    protected override IViewComponentResult InvokeComponent(ContactBlock currentContent)
     {
-        private readonly IContentLoader _contentLoader;
-        private readonly IPermanentLinkMapper _permanentLinkMapper;
-
-        public ContactBlockViewComponent(IContentLoader contentLoader, IPermanentLinkMapper permanentLinkMapper)
+        ContactPage contactPage = null;
+        if (!ContentReference.IsNullOrEmpty(currentContent.ContactPageLink))
         {
-            _contentLoader = contentLoader;
-            _permanentLinkMapper = permanentLinkMapper;
+            contactPage = _contentLoader.Get<ContactPage>(currentContent.ContactPageLink);
         }
 
-        protected override IViewComponentResult InvokeComponent(ContactBlock currentContent)
+        var linkUrl = GetLinkUrl(currentContent);
+
+        var model = new ContactBlockModel
         {
-            ContactPage contactPage = null;
-            if (!ContentReference.IsNullOrEmpty(currentContent.ContactPageLink))
-            {
-                contactPage = _contentLoader.Get<ContactPage>(currentContent.ContactPageLink);
-            }
+            Heading = currentContent.Heading,
+            Image = currentContent.Image,
+            ContactPage = contactPage,
+            LinkUrl = GetLinkUrl(currentContent),
+            LinkText = currentContent.LinkText,
+            ShowLink = linkUrl != null
+        };
 
-            var linkUrl = GetLinkUrl(currentContent);
+        // As we're using a separate view model with different property names than the content object
+        // we connect the view models properties with the content objects so that they can be edited.
+        ViewData.GetEditHints<ContactBlockModel, ContactBlock>()
+            .AddConnection(x => x.Heading, x => x.Heading)
+            .AddConnection(x => x.Image, x => x.Image)
+            .AddConnection(x => (object)x.ContactPage, x => x.ContactPageLink)
+            .AddConnection(x => x.LinkText, x => x.LinkText);
 
-            var model = new ContactBlockModel
-            {
-                Heading = currentContent.Heading,
-                Image = currentContent.Image,
-                ContactPage = contactPage,
-                LinkUrl = GetLinkUrl(currentContent),
-                LinkText = currentContent.LinkText,
-                ShowLink = linkUrl != null
-            };
+        return View(model);
+    }
 
-            // As we're using a separate view model with different property names than the content object
-            // we connect the view models properties with the content objects so that they can be edited.
-            ViewData.GetEditHints<ContactBlockModel, ContactBlock>()
-                .AddConnection(x => x.Heading, x => x.Heading)
-                .AddConnection(x => x.Image, x => x.Image)
-                .AddConnection(x => (object)x.ContactPage, x => x.ContactPageLink)
-                .AddConnection(x => x.LinkText, x => x.LinkText);
+    HtmlString GetLinkUrl(ContactBlock contactBlock)
+    {
+        if (contactBlock.LinkUrl != null && !contactBlock.LinkUrl.IsEmpty())
+        {
+            string linkUrl = contactBlock.LinkUrl.ToString();
 
-            return View(model);
+            // If the url maps to a page on the site we convert it from the internal (permanent, GUID-like) format
+            // to the human readable and pretty public format
+            var linkMap = _permanentLinkMapper.Find(new UrlBuilder(linkUrl));
+            return linkMap != null && !ContentReference.IsNullOrEmpty(linkMap.ContentReference)
+                ? new HtmlString(Url.ContentUrl(linkMap.ContentReference))
+                : new HtmlString(contactBlock.LinkUrl.ToString());
         }
 
-        private HtmlString GetLinkUrl(ContactBlock contactBlock)
-        {
-            if (contactBlock.LinkUrl != null && !contactBlock.LinkUrl.IsEmpty())
-            {
-                var linkUrl = contactBlock.LinkUrl.ToString();
-
-                // If the url maps to a page on the site we convert it from the internal (permanent, GUID-like) format
-                // to the human readable and pretty public format
-                var linkMap = _permanentLinkMapper.Find(new UrlBuilder(linkUrl));
-                if (linkMap != null && !ContentReference.IsNullOrEmpty(linkMap.ContentReference))
-                {
-                    return new HtmlString(Url.ContentUrl(linkMap.ContentReference));
-                }
-
-                return new HtmlString(contactBlock.LinkUrl.ToString());
-            }
-
-            return null;
-        }
+        return null;
     }
 }
